@@ -1,8 +1,9 @@
 import { route } from 'next/dist/server/router'
 import router from 'next/router'
 import { createContext, useState } from 'react'
+import Cookie from 'js-cookie'
 import firebase from "../../firebase/config"
-import Usuario from '../../model/usuario'
+import Usuario from '../../model/Usuario'
 
 
 interface AuthContextProps {
@@ -24,8 +25,28 @@ async function usuarioNormalizado(usuarioFirebase: firebase.User): Promise<Usuar
     }
 } 
 
-export function AuthProvider(props) {
+function gerenciarCookie(logado: boolean) {
+    if(logado) {
+        Cookie.set('admin-template-auth', logado,{
+           expires: 7 
+        })    
+    } else {
+        Cookie.remove('admin-template-auth')
+    }
+}
+
+ export function AuthProvider(props) {
     const [usuario, setUsuario] = useState<Usuario>(null)
+
+        async function configurarSessao(usuarioFirebase) {
+            if(usuarioFirebase?.email) {
+                const usuario = await usuarioNormalizado(usuarioFirebase)
+                gerenciarCookie(true)
+            } else {
+                gerenciarCookie(false)
+
+            }
+        }
 
     async function loginGoogle() {
         const resp = await firebase.auth().signInWithPopup(
