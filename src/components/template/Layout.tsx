@@ -1,8 +1,9 @@
 import MenoLateral from "./ManuLateral";
 import Cabecalho from './Cabecalho'
 import Conteudo from './Conteudo'
-import ForcarAutenticacao from '../auth/ForcaAutenticacao'
+// import ForcarAutenticacao from '../auth/ForcaAutenticacao'
 import useAppData from "../../data/hook/useAppData"
+import forcarAutenticacao from "../../functions/ForcaAutenticacao";
 
 interface LayoutProps {
     titulo: string
@@ -14,8 +15,8 @@ interface LayoutProps {
 
 export default function Layout (props: LayoutProps){
     const { tema} = useAppData()
-    return (
-        <ForcarAutenticacao>
+    forcarAutenticacao
+    return forcarAutenticacao(
         <div className={`${tema} flex h-screen w-screen`}>
             <MenoLateral/>
             <div className={`
@@ -28,6 +29,5 @@ export default function Layout (props: LayoutProps){
             </Conteudo>
             </div>
         </div>
-        </ForcarAutenticacao>
     )
 }

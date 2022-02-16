@@ -10,6 +10,8 @@ import { useEffect } from 'react'
 interface AuthContextProps {
     usuario?: Usuario
     carregando?: boolean
+    cadastrar?: (email: string, senha) => Promise<void>
+    login?: (email: string, senha) => Promise<void>
     loginGoogle?: () => Promise<void>
     logout?: () => Promise<void>
 }
@@ -56,6 +58,36 @@ function gerenciarCookie(logado: boolean) {
 
             }
         }
+        async function cadastrar(email, senha) {
+            try {
+                setCarregando(true)
+                const resp = await firebase.auth()
+                .createUserWithEmailAndPassword(email, senha)
+                
+                    await configurarSessao(resp.user)
+                    router.push('/')
+            } finally {
+                setCarregando(false)
+            } 
+    
+            }
+
+
+
+        async function login(email, senha) {
+            try {
+                setCarregando(true)
+                const resp = await firebase.auth()
+                .signInWithEmailAndPassword(email, senha)
+                
+                    await configurarSessao(resp.user)
+                    router.push('/')
+            } finally {
+                setCarregando(false)
+            } 
+    
+            }
+
 
     async function loginGoogle() {
         try {
@@ -64,7 +96,7 @@ function gerenciarCookie(logado: boolean) {
                 new firebase.auth.GoogleAuthProvider()
             )
             
-                configurarSessao(resp.user)
+                await configurarSessao(resp.user)
                 router.push('/')
         } finally {
             setCarregando(false)
@@ -95,6 +127,8 @@ function gerenciarCookie(logado: boolean) {
         <AuthContext.Provider value={{
            usuario,
            carregando,
+           login,
+           cadastrar,
            loginGoogle,
            logout 
         }}>
