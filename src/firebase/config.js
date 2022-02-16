@@ -1,4 +1,4 @@
-import firebase from "firebase/app"
+import firebase from "firebase/apps"
 import 'firebase/auth'
 
 if(!firebase.apps.length){
