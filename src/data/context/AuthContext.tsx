@@ -4,11 +4,14 @@ import { createContext, useState } from 'react'
 import Cookie from 'js-cookie'
 import firebase from "../../firebase/config"
 import Usuario from '../../model/Usuario'
+import { useEffect } from 'react'
 
 
 interface AuthContextProps {
     usuario?: Usuario
+    carregando?: boolean
     loginGoogle?: () => Promise<void>
+    logout?: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextProps>({}) 
@@ -36,35 +39,64 @@ function gerenciarCookie(logado: boolean) {
 }
 
  export function AuthProvider(props) {
+    const [carregando, setCarregando] = useState(true)
     const [usuario, setUsuario] = useState<Usuario>(null)
 
         async function configurarSessao(usuarioFirebase) {
             if(usuarioFirebase?.email) {
                 const usuario = await usuarioNormalizado(usuarioFirebase)
+                setUsuario(usuario)
                 gerenciarCookie(true)
+                setCarregando(false)
             } else {
+                setUsuario(null)
                 gerenciarCookie(false)
+                setCarregando(false)
+                return false
 
             }
         }
 
     async function loginGoogle() {
-        const resp = await firebase.auth().signInWithPopup(
-            new firebase.auth.GoogleAuthProvider()
-        )
-        if(resp.user?.email){
-            const usuario = await usuarioNormalizado(resp.user)
-            setUsuario(usuario)
-            router.push('/')    
+        try {
+            setCarregando(true)
+            const resp = await firebase.auth().signInWithPopup(
+                new firebase.auth.GoogleAuthProvider()
+            )
+            
+                configurarSessao(resp.user)
+                router.push('/')
+        } finally {
+            setCarregando(false)
+        } 
+
+        }
+
+        async function logout() {
+            try {
+            setCarregando(true)
+            await firebase.auth().signOut()
+            await configurarSessao(null)
+            } finally {
+                setCarregando(false)
+            }
         }
         
-    }
-
+        useEffect(() => {
+            if(Cookie.get('admin-template-auth')) {
+                const cancelar =  firebase.auth().onIdTokenChanged(configurarSessao)
+                return () => cancelar()
+            } else {
+                setCarregando(false)
+            }
+        }, [])
 
     return (
         <AuthContext.Provider value={{
            usuario,
-           loginGoogle 
+           carregando,
+           loginGoogle,
+           logout 
         }}>
             {props.children}
         </AuthContext.Provider>
